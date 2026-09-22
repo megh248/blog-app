@@ -1,0 +1,23 @@
+# Python
+backend/.venv/
+backend/__pycache__/
+*.pyc
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Node
+web/node_modules/
+web/dist/
+
+# Mobile
+mobile/node_modules/
+mobile/.expo/
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
