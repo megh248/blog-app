@@ -1,11 +1,10 @@
-import { BlogList } from "./features/blogs/components/BlogList";
-import { mockBlogs } from "./features/blogs/data/mockBlogs";
+import { Home } from "./pages/Home";
 
 function App() {
   return (
     <>
       <section>
-        <BlogList blogs={mockBlogs}/>
+        <Home />
       </section>
     </>
   );
