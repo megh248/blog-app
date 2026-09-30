@@ -3,7 +3,7 @@ export interface Blog {
   title: string;
   content: string;
   description: string;
-  author: string;
+  author: string | undefined;
   category: string;
 }
 
@@ -14,7 +14,6 @@ export interface BlogListProps {
 export interface BlogCardProps{
     blog: Blog
 }
-
 export interface BlogDetailsProps{
     blog: Blog
 }

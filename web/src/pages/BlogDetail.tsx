@@ -1,11 +1,31 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useParams } from "react-router-dom";
-import { mockBlogs } from "../features/blogs/data/mockBlogs";
 import type { Blog } from "../features/blogs/types/blogTypes";
+import { useCallback, useEffect, useState } from "react";
+import { fetchBlog } from "../lib/api/blogs";
 
 export const BlogDetails = () => {
   const { id } = useParams();
+  const [blogData, setBlogData] = useState<Blog>();
+  const [isLoading, setIsLoading] = useState(true);
 
-  const getInitials = (name: string) => {
+  const handleFetchBlogDetails = useCallback(async () => {
+    try {
+      const blog = await fetchBlog(id);
+      console.log(blog);
+      setBlogData(blog);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    handleFetchBlogDetails();
+  }, [handleFetchBlogDetails]);
+
+  const getInitials = (name: string = "") => {
     return name
       .trim()
       .split(/\s+/)
@@ -14,25 +34,12 @@ export const BlogDetails = () => {
       .join("")
       .toUpperCase();
   };
-
-  if (!id)
+  console.log(isLoading, blogData);
+  if (isLoading && !blogData) {
     return (
-      <section>
-        <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-gray-900 md:text-5xl dark:text-white">
-          Blog not found !
-        </h1>
-      </section>
-    );
-
-  const blog = mockBlogs.find((blog: Blog) => blog.id === Number(id));
-
-  if (!blog) {
-    return (
-      <section>
-        <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-gray-900 md:text-5xl dark:text-white">
-          Blog not found !
-        </h1>
-      </section>
+      <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-gray-900 md:text-5xl dark:text-white">
+        Fetching blog data
+      </h1>
     );
   }
   return (
@@ -40,25 +47,25 @@ export const BlogDetails = () => {
       <div className="mx-auto max-w-4xl px-6 py-12 lg:py-20">
         <div className="mb-5">
           <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-            {blog.category}
+            {blogData?.category}
           </span>
         </div>
         <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-gray-900 md:text-5xl dark:text-white">
-          {blog.title}
+          {blogData?.title}
         </h1>
         <p className="mb-8 text-lg leading-relaxed text-gray-600 dark:text-gray-400">
-          {blog.description}
+          {blogData?.description}
         </p>
 
         <hr className="mb-8 border-gray-200 dark:border-gray-700" />
         <div className="mb-10 flex items-center gap-4">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-900 text-sm font-bold text-white dark:bg-white dark:text-gray-900">
-            {getInitials(blog.author)}
+            {getInitials(blogData?.author)}
           </div>
 
           <div>
             <p className="font-semibold text-gray-900 dark:text-white">
-              {blog.author}
+              {blogData?.author}
             </p>
 
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -67,7 +74,7 @@ export const BlogDetails = () => {
           </div>
         </div>
         <article className="text-lg leading-8 text-gray-700 dark:text-gray-300">
-          {blog.content}
+          {blogData?.content}
         </article>
       </div>
     </section>

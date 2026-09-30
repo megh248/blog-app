@@ -1,25 +1,30 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { Navbar } from "../components/layout/Navbar";
 import { CategorySection } from "../components/sections/CategorySection";
 import { Hero } from "../components/sections/Hero";
 import { BlogList } from "../features/blogs/components/BlogList";
-import { mockBlogs } from "../features/blogs/data/mockBlogs";
 import { Input } from "../components/ui/input";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { fetchBlogs } from "../lib/api/blogs";
+import type { Blog } from "../features/blogs/types/blogTypes";
 
 export const Home = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [blogs, setBlogs] = useState<Blog[]>([]);
 
-  const blogs = mockBlogs.filter((blog) => {
-    const matchesSearch = blog.title
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "All" ||
+  const handleFetchBlogs = useCallback(async () => {
+    try {
+      const blogs = await fetchBlogs();
+      setBlogs(blogs.data);
+    } catch (e) {
+      console.log(e);
+    }
+  }, []);
 
-      blog.category.toLowerCase() === selectedCategory.toLowerCase();
-    return matchesSearch && matchesCategory;
-  });
+  useEffect(() => {
+    handleFetchBlogs();
+  }, [handleFetchBlogs]);
 
   const handleBlogSearch = (searchTerm: string) => {
     setSearchTerm(searchTerm);
@@ -47,7 +52,17 @@ export const Home = () => {
         selectedCategory={selectedCategory}
       />
       <section>
-        <BlogList blogs={blogs} />
+        <BlogList
+          blogs={blogs?.filter((blog) => {
+            const matchesSearch = blog.title
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase());
+            const matchesCategory =
+              selectedCategory === "All" ||
+              blog.category.toLowerCase() === selectedCategory.toLowerCase();
+            return matchesSearch && matchesCategory;
+          })}
+        />
       </section>
     </div>
   );
