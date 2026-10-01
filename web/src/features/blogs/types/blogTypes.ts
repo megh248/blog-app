@@ -5,6 +5,7 @@ export interface Blog {
   description: string;
   author: string | undefined;
   category: string;
+  detail?: string
 }
 
 export interface BlogListProps {

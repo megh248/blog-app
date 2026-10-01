@@ -1,55 +1,79 @@
-from operator import indexOf
+from datetime import datetime
+from fastapi import APIRouter, HTTPException, status
 
-from fastapi import APIRouter
+from app.schemas.blog import BlogResponse, BlogCreate, BlogUpdate
 
-router = APIRouter()
+# Import your schemas from above here
+
+router = APIRouter(prefix="/blogs", tags=["Blogs"])
+
 MOCK_BLOGS = [
     {
         "id": 1,
         "title": "Understanding React Server State",
-        "description":
-            "A practical guide to managing server state in modern React applications.",
+        "description": "A practical guide to managing server state...",
         "author": "Megh Buch",
-        "content":
-            "Server state is data that comes from an external source such as an API or database. Unlike local UI state, server state can become stale and usually needs to be fetched again when required. Libraries like TanStack Query make it easier to handle fetching, caching, loading states, and errors. They also provide useful features such as automatic refetching and cache invalidation. Keeping server state separate from local UI state can make React applications easier to understand. A good server-state strategy can also reduce unnecessary API calls and improve application performance. Understanding these concepts becomes especially useful as an application grows.",
+        "content": "Server state is data that comes from...",
         "category": "React",
+        "created_at": datetime.now()
     },
-
-    {
-        "id": 2,
-        "title": "Getting Started with Python",
-        "description":
-            "Learning Python fundamentals while building a real-world application.",
-        "author": "Megh Buch",
-        "content":
-            "Python is a beginner-friendly programming language that is widely used for web development, automation, data analysis, and scripting. Its simple syntax makes it relatively easy to understand when learning programming concepts. Variables, functions, lists, dictionaries, and classes are some of the basic building blocks of Python. Building a small application is a great way to understand how these concepts work together. Python also has a large ecosystem of libraries that can be used to solve different problems. Practicing by writing small programs is often more useful than only reading documentation. With consistent practice, Python can become a powerful addition to a developer's toolkit.",
-        "category": "Python",
-    },
-
-    {
-        "id": 3,
-        "title": "Building Better Frontend Architecture",
-        "description":
-            "Some practical ideas for structuring scalable frontend applications.",
-        "author": "Megh Buch",
-        "content":
-            "A well-structured frontend application becomes much easier to maintain as the codebase grows. Separating components, business logic, API services, and utility functions can help keep responsibilities clear. Reusable components can also reduce duplicated code across different parts of the application. It is important to choose a folder structure that makes it easy for developers to find and understand related files. State management should be introduced based on the actual complexity of the application rather than adding unnecessary tools. Good frontend architecture should also consider performance, testing, and future changes. The goal is to create a codebase that remains understandable even as new features are added.",
-        "category": "Frontend",
-    },
+    # ... your other mock blogs here (add a "created_at" field to match schema)
 ]
 
 
-@router.get("/blogs")
+# --- READ ALL ---
+@router.get("", response_model=list[BlogResponse])
 async def get_blogs():
-    return {
-        "message": "Blogs fetched !",
-        "data": MOCK_BLOGS
-    }
+    return MOCK_BLOGS
 
-@router.get("/blogs/{blog_id}")
+
+# --- READ ONE ---
+@router.get("/{blog_id}", response_model=BlogResponse)
 async def get_blog_by_id(blog_id: int):
     for blog in MOCK_BLOGS:
         if blog["id"] == blog_id:
             return blog
+    raise HTTPException(status_code=404, detail="Blog not found")
 
-    return {"message": "Blog not found"}
+
+# --- CREATE ---
+@router.post("", response_model=BlogResponse, status_code=status.HTTP_201_CREATED)
+async def create_blog(blog_input: BlogCreate):
+    # Auto-generate a new ID
+    new_id = max([b["id"] for b in MOCK_BLOGS], default=0) + 1
+
+    # Convert Pydantic object to dict and add system fields
+    new_blog = blog_input.model_dump()
+    new_blog["id"] = new_id
+    new_blog["created_at"] = datetime.now()
+
+    MOCK_BLOGS.append(new_blog)
+    return new_blog
+
+
+# --- UPDATE (PATCH) ---
+@router.patch("/{blog_id}", response_model=BlogResponse)
+async def update_blog(blog_id: int, blog_input: BlogUpdate):
+    for blog in MOCK_BLOGS:
+        if blog["id"] == blog_id:
+            # Extract only fields that the client explicitly sent
+            update_data = blog_input.model_dump(exclude_unset=True)
+
+            # Apply changes to the mock dictionary item
+            for key, value in update_data.items():
+                blog[key] = value
+
+            return blog
+
+    raise HTTPException(status_code=404, detail="Blog not found")
+
+
+# --- DELETE ---
+@router.delete("/{blog_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_blog(blog_id: int):
+    for index, blog in enumerate(MOCK_BLOGS):
+        if blog["id"] == blog_id:
+            MOCK_BLOGS.pop(index)
+            return  # HTTP 204 does not return content
+
+    raise HTTPException(status_code=404, detail="Blog not found")

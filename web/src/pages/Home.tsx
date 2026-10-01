@@ -4,28 +4,22 @@ import { CategorySection } from "../components/sections/CategorySection";
 import { Hero } from "../components/sections/Hero";
 import { BlogList } from "../features/blogs/components/BlogList";
 import { Input } from "../components/ui/input";
-import { useState, useEffect, useCallback } from "react";
+import { useState, use, useMemo } from "react";
 import { fetchBlogs } from "../lib/api/blogs";
 import type { Blog } from "../features/blogs/types/blogTypes";
+
+const blogsPromise = fetchBlogs()
+  .then((res) => res)
+  .catch((e) => {
+    console.log(e);
+    return [];
+  });
 
 export const Home = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [blogs, setBlogs] = useState<Blog[]>([]);
 
-  const handleFetchBlogs = useCallback(async () => {
-    try {
-      const blogs = await fetchBlogs();
-      setBlogs(blogs.data);
-    } catch (e) {
-      console.log(e);
-    }
-  }, []);
-
-  useEffect(() => {
-    handleFetchBlogs();
-  }, [handleFetchBlogs]);
-
+  const initialBlogs = use(blogsPromise);
   const handleBlogSearch = (searchTerm: string) => {
     setSearchTerm(searchTerm);
   };
@@ -33,6 +27,18 @@ export const Home = () => {
   const handleFilterByCategory = (category: string) => {
     setSelectedCategory(category);
   };
+
+  const filteredBlogs = useMemo(() => {
+    return initialBlogs.filter((blog: Blog) => {
+      const matchesSearch = blog.title
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesCategory =
+        selectedCategory === "All" ||
+        blog.category.toLowerCase() === selectedCategory.toLowerCase();
+      return matchesSearch && matchesCategory;
+    });
+  }, [initialBlogs, searchTerm, selectedCategory]);
 
   return (
     <div>
@@ -51,19 +57,7 @@ export const Home = () => {
         onValueChange={handleFilterByCategory}
         selectedCategory={selectedCategory}
       />
-      <section>
-        <BlogList
-          blogs={blogs?.filter((blog) => {
-            const matchesSearch = blog.title
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase());
-            const matchesCategory =
-              selectedCategory === "All" ||
-              blog.category.toLowerCase() === selectedCategory.toLowerCase();
-            return matchesSearch && matchesCategory;
-          })}
-        />
-      </section>
+      <BlogList blogs={filteredBlogs} />
     </div>
   );
 };

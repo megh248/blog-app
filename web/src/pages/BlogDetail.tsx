@@ -3,6 +3,53 @@ import { useParams } from "react-router-dom";
 import type { Blog } from "../features/blogs/types/blogTypes";
 import { useCallback, useEffect, useState } from "react";
 import { fetchBlog } from "../lib/api/blogs";
+import { Skeleton } from "../components/ui/skeleton";
+
+export default function BlogSkeleton() {
+  return (
+    <section className="bg-white dark:bg-gray-900">
+      <div className="mx-auto max-w-4xl px-6 py-12 lg:py-20">
+        {/* Category Badge Skeleton */}
+        <div className="mb-5">
+          <Skeleton className="h-7 w-24 rounded-full" />
+        </div>
+
+        {/* Title Skeleton */}
+        <div className="mb-6 space-y-3">
+          <Skeleton className="h-10 w-full md:h-12" />
+          <Skeleton className="h-10 w-4/5 md:h-12" />
+        </div>
+
+        {/* Description Skeleton */}
+        <div className="mb-8 space-y-2">
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-5 w-3/4" />
+        </div>
+
+        <hr className="mb-8 border-gray-200 dark:border-gray-700" />
+
+        {/* Author Section Skeleton */}
+        <div className="mb-10 flex items-center gap-4">
+          <Skeleton className="h-11 w-11 rounded-full shrink-0" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-48" />
+          </div>
+        </div>
+
+        {/* Article Body Skeleton */}
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-11/12" />
+          <Skeleton className="h-4 w-4/5" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-9/12" />
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export const BlogDetails = () => {
   const { id } = useParams();
@@ -12,12 +59,14 @@ export const BlogDetails = () => {
   const handleFetchBlogDetails = useCallback(async () => {
     try {
       const blog = await fetchBlog(id);
-      console.log(blog);
-      setBlogData(blog);
+      const data = blog && Object.keys(blog).length > 0 ? blog : null;
+      setBlogData(data);
     } catch (e) {
       console.log(e);
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 2000);
     }
   }, [id]);
 
@@ -34,12 +83,18 @@ export const BlogDetails = () => {
       .join("")
       .toUpperCase();
   };
-  console.log(isLoading, blogData);
-  if (isLoading && !blogData) {
+  if (isLoading) {
+    return <BlogSkeleton />;
+  }
+  if (blogData && !blogData.title) {
     return (
-      <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-gray-900 md:text-5xl dark:text-white">
-        Fetching blog data
-      </h1>
+      <section className="bg-white h-100 mt-50 dark:bg-gray-900">
+        <div className="px-4 mx-auto text-center md:max-w-3xl lg:max-w-5xl lg:px-36">
+          <span className="font-semibold text-gray-400 uppercase">
+            {blogData.detail}
+          </span>
+        </div>
+      </section>
     );
   }
   return (
