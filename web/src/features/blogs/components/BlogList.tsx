@@ -1,8 +1,13 @@
-import { useState } from "react";
 import type { BlogListProps } from "../types/blogTypes";
 import { BlogCard } from "./BlogCard";
 import { Skeleton } from "../../../components/ui/skeleton";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "../../../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+} from "../../../components/ui/card";
 
 export function BlogCardSkeleton() {
   return (
@@ -33,19 +38,22 @@ export function BlogCardSkeleton() {
   );
 }
 
-export const BlogList = ({ blogs }: BlogListProps) => {
-  const [showBlogs, setShowBlogs] = useState(false);
-
-  setTimeout(() => {
-    setShowBlogs(true);
-  }, 1000);
-  if (!showBlogs || !blogs.length) {
+export const BlogList = ({ blogs, isLoading }: BlogListProps) => {
+  if (isLoading) {
     return (
       <span className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
         <BlogCardSkeleton />
         <BlogCardSkeleton />
         <BlogCardSkeleton />
       </span>
+    );
+  }
+  if (!blogs.length) {
+    return (
+      <div className="text-center mx-auto font-semibold text-gray-400 uppercase mt-16">
+        {" "}
+        No blogs to show
+      </div>
     );
   }
   return (

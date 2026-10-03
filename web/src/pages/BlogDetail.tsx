@@ -64,11 +64,11 @@ export const BlogDetails = () => {
     } catch (e) {
       console.log(e);
     } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 2000);
+      setIsLoading(false);
     }
   }, [id]);
+
+  console.log(blogData)
 
   useEffect(() => {
     handleFetchBlogDetails();
@@ -86,12 +86,12 @@ export const BlogDetails = () => {
   if (isLoading) {
     return <BlogSkeleton />;
   }
-  if (blogData && !blogData.title) {
+  if (!blogData) {
     return (
       <section className="bg-white h-100 mt-50 dark:bg-gray-900">
         <div className="px-4 mx-auto text-center md:max-w-3xl lg:max-w-5xl lg:px-36">
           <span className="font-semibold text-gray-400 uppercase">
-            {blogData.detail}
+            FAILED TO FETCH BLOG DATA !
           </span>
         </div>
       </section>

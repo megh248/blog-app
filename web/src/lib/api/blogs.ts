@@ -5,7 +5,7 @@ export const fetchBlogs = async () => {
     return data;
   } catch (e) {
     console.log(e);
-    return "Something went wrong!";
+    return [];
   }
 };
 
@@ -16,6 +16,6 @@ export const fetchBlog = async (id: string | undefined) => {
     return data;
   } catch (e) {
     console.log(e);
-    return "Something went wrong!";
+    return {}
   }
 };

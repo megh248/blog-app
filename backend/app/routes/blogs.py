@@ -1,11 +1,12 @@
 from datetime import datetime
+
 from fastapi import APIRouter, HTTPException, status
 
 from app.schemas.blog import BlogResponse, BlogCreate, BlogUpdate
 
-# Import your schemas from above here
 
 router = APIRouter(prefix="/blogs", tags=["Blogs"])
+
 
 MOCK_BLOGS = [
     {
@@ -15,65 +16,128 @@ MOCK_BLOGS = [
         "author": "Megh Buch",
         "content": "Server state is data that comes from...",
         "category": "React",
-        "created_at": datetime.now()
+        "created_at": datetime.now(),
     },
-    # ... your other mock blogs here (add a "created_at" field to match schema)
 ]
 
 
-# --- READ ALL ---
+# READ ALL
 @router.get("", response_model=list[BlogResponse])
 async def get_blogs():
-    return MOCK_BLOGS
+    try:
+        return MOCK_BLOGS
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch blogs",
+        )
 
 
-# --- READ ONE ---
+# READ ONE
 @router.get("/{blog_id}", response_model=BlogResponse)
 async def get_blog_by_id(blog_id: int):
-    for blog in MOCK_BLOGS:
-        if blog["id"] == blog_id:
-            return blog
-    raise HTTPException(status_code=404, detail="Blog not found")
+    try:
+        for blog in MOCK_BLOGS:
+            if blog["id"] == blog_id:
+                return blog
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Blog not found",
+        )
+
+    except HTTPException:
+        raise
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch blog",
+        )
 
 
-# --- CREATE ---
-@router.post("", response_model=BlogResponse, status_code=status.HTTP_201_CREATED)
+# CREATE
+@router.post(
+    "",
+    response_model=BlogResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_blog(blog_input: BlogCreate):
-    # Auto-generate a new ID
-    new_id = max([b["id"] for b in MOCK_BLOGS], default=0) + 1
+    try:
+        new_id = max(
+            [blog["id"] for blog in MOCK_BLOGS],
+            default=0,
+        ) + 1
 
-    # Convert Pydantic object to dict and add system fields
-    new_blog = blog_input.model_dump()
-    new_blog["id"] = new_id
-    new_blog["created_at"] = datetime.now()
+        new_blog = blog_input.model_dump()
 
-    MOCK_BLOGS.append(new_blog)
-    return new_blog
+        new_blog["id"] = new_id
+        new_blog["created_at"] = datetime.now()
+
+        MOCK_BLOGS.append(new_blog)
+
+        return new_blog
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create blog",
+        )
 
 
-# --- UPDATE (PATCH) ---
+# UPDATE
 @router.patch("/{blog_id}", response_model=BlogResponse)
 async def update_blog(blog_id: int, blog_input: BlogUpdate):
-    for blog in MOCK_BLOGS:
-        if blog["id"] == blog_id:
-            # Extract only fields that the client explicitly sent
-            update_data = blog_input.model_dump(exclude_unset=True)
+    try:
+        for blog in MOCK_BLOGS:
+            if blog["id"] == blog_id:
 
-            # Apply changes to the mock dictionary item
-            for key, value in update_data.items():
-                blog[key] = value
+                update_data = blog_input.model_dump(
+                    exclude_unset=True
+                )
 
-            return blog
+                for key, value in update_data.items():
+                    blog[key] = value
 
-    raise HTTPException(status_code=404, detail="Blog not found")
+                return blog
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Blog not found",
+        )
+
+    except HTTPException:
+        raise
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update blog",
+        )
 
 
-# --- DELETE ---
-@router.delete("/{blog_id}", status_code=status.HTTP_204_NO_CONTENT)
+# DELETE
+@router.delete(
+    "/{blog_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 async def delete_blog(blog_id: int):
-    for index, blog in enumerate(MOCK_BLOGS):
-        if blog["id"] == blog_id:
-            MOCK_BLOGS.pop(index)
-            return  # HTTP 204 does not return content
+    try:
+        for index, blog in enumerate(MOCK_BLOGS):
+            if blog["id"] == blog_id:
+                MOCK_BLOGS.pop(index)
+                return
 
-    raise HTTPException(status_code=404, detail="Blog not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Blog not found",
+        )
+
+    except HTTPException:
+        raise
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete blog",
+        )
