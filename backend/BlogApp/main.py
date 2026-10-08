@@ -4,13 +4,26 @@ from pydantic import BaseModel, Field
 
 import models
 from fastapi.params import Depends
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from fastapi import FastAPI, HTTPException, Path
 from database import engine, SessionLocal
 from starlette import status
 
 app = FastAPI()
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:5173",
+]
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 models.Blogs.metadata.create_all(bind=engine)
 
 
@@ -30,7 +43,7 @@ class BlogRequest(BaseModel):
     description: str = Field(min_length=1, max_length=100)
     content: str = Field(min_length=1)
     category: str = Field(min_length=1)
-
+    author: str = Field(min_length=1)
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -38,12 +51,13 @@ class BlogRequest(BaseModel):
                 "description": "New blog description",
                 "content": "Content of blog",
                 "category": "Category of blog",
+                "author": "Name of Author"
             }
         }
     }
 
 
-@app.get("/", status_code=status.HTTP_200_OK)
+@app.get("/blogs", status_code=status.HTTP_200_OK)
 async def read_all(db: db_dependency):
     return db.query(models.Blogs).all()
 
@@ -72,6 +86,7 @@ async def update_blog(db: db_dependency, blog: BlogRequest, blog_id: int = Path(
     blog_model.description = blog.description
     blog_model.content = blog.content
     blog_model.category = blog.category
+    blog_model.author = blog.author
     db.add(blog_model)
     db.commit()
 

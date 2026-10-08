@@ -1,5 +1,6 @@
 from database import base
-from sqlalchemy import Column, Integer,String
+from sqlalchemy import Column, Integer, String
+
 
 class Blogs(base):
     __tablename__ = "blog"
@@ -8,3 +9,4 @@ class Blogs(base):
     content = Column(String)
     description = Column(String)
     category = Column(String)
+    author = Column(String)
