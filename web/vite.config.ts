@@ -10,6 +10,30 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) {
+            return;
+          }
+          if (id.includes("react-dom") || id.includes("/react/") || id.includes("react-router")) {
+            return "react";
+          }
+          if (id.includes("@tanstack")) {
+            return "query";
+          }
+          if (
+            id.includes("react-hook-form") ||
+            id.includes("@hookform") ||
+            id.includes("/zod/")
+          ) {
+            return "forms";
+          }
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       "/api": {

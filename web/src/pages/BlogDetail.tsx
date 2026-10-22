@@ -1,50 +1,29 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useParams } from "react-router-dom";
-import type { Blog } from "../features/blogs/types/blogTypes";
-import { useCallback, useEffect, useState } from "react";
-import { fetchBlog } from "../lib/api/blogs";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
+import { deleteBlog, fetchBlog } from "../lib/api/blogs";
+import { ApiError } from "../lib/api/client";
 
 export default function BlogSkeleton() {
   return (
     <section className="bg-white dark:bg-gray-900">
       <div className="mx-auto max-w-4xl px-6 py-12 lg:py-20">
-        {/* Category Badge Skeleton */}
         <div className="mb-5">
           <Skeleton className="h-7 w-24 rounded-full" />
         </div>
-
-        {/* Title Skeleton */}
         <div className="mb-6 space-y-3">
           <Skeleton className="h-10 w-full md:h-12" />
           <Skeleton className="h-10 w-4/5 md:h-12" />
         </div>
-
-        {/* Description Skeleton */}
         <div className="mb-8 space-y-2">
           <Skeleton className="h-5 w-full" />
           <Skeleton className="h-5 w-3/4" />
         </div>
-
         <hr className="mb-8 border-gray-200 dark:border-gray-700" />
-
-        {/* Author Section Skeleton */}
-        <div className="mb-10 flex items-center gap-4">
-          <Skeleton className="h-11 w-11 rounded-full shrink-0" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-3 w-48" />
-          </div>
-        </div>
-
-        {/* Article Body Skeleton */}
         <div className="space-y-4">
           <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-11/12" />
-          <Skeleton className="h-4 w-4/5" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-9/12" />
         </div>
       </div>
     </section>
@@ -53,84 +32,99 @@ export default function BlogSkeleton() {
 
 export const BlogDetails = () => {
   const { id } = useParams();
-  const [blogData, setBlogData] = useState<Blog>();
-  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const blogId = Number(id);
+  const isValidId = Number.isInteger(blogId) && blogId > 0;
 
-  const handleFetchBlogDetails = useCallback(async () => {
-    try {
-      const blog = await fetchBlog(id);
-      const data = blog && Object.keys(blog).length > 0 ? blog : null;
-      setBlogData(data);
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id]);
+  const blogQuery = useQuery({
+    queryKey: ["blog", blogId],
+    queryFn: () => fetchBlog(blogId),
+    enabled: isValidId,
+  });
 
-  console.log(blogData)
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteBlog(blogId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["blogs"] });
+      navigate("/");
+    },
+  });
 
-  useEffect(() => {
-    handleFetchBlogDetails();
-  }, [handleFetchBlogDetails]);
+  if (!isValidId) {
+    return (
+      <p className="py-24 text-center font-semibold uppercase text-muted-foreground">
+        Blog not found
+      </p>
+    );
+  }
 
-  const getInitials = (name: string = "") => {
-    return name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((word) => word[0])
-      .join("")
-      .toUpperCase();
-  };
-  if (isLoading) {
+  if (blogQuery.isPending) {
     return <BlogSkeleton />;
   }
-  if (!blogData) {
+
+  if (blogQuery.isError) {
+    const message =
+      blogQuery.error instanceof ApiError
+        ? blogQuery.error.detail
+        : "Failed to fetch blog data.";
     return (
-      <section className="bg-white h-100 mt-50 dark:bg-gray-900">
-        <div className="px-4 mx-auto text-center md:max-w-3xl lg:max-w-5xl lg:px-36">
-          <span className="font-semibold text-gray-400 uppercase">
-            FAILED TO FETCH BLOG DATA !
-          </span>
-        </div>
+      <section className="py-24 text-center">
+        <p className="font-semibold uppercase text-muted-foreground">{message}</p>
+        <Link className="mt-4 inline-block text-sm underline" to="/">
+          Back home
+        </Link>
       </section>
     );
   }
+
+  const blog = blogQuery.data;
+
   return (
     <section className="bg-white dark:bg-gray-900">
       <div className="mx-auto max-w-4xl px-6 py-12 lg:py-20">
-        <div className="mb-5">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
           <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-            {blogData?.category}
+            {blog.category}
           </span>
+          <div className="flex gap-2">
+            <Link
+              to={`/blog/${blog.id}/edit`}
+              className="inline-flex h-8 items-center rounded-lg border border-border px-2.5 text-sm"
+            >
+              Edit
+            </Link>
+            <Button
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => {
+                if (window.confirm("Delete this post?")) {
+                  deleteMutation.mutate();
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </div>
         </div>
         <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight text-gray-900 md:text-5xl dark:text-white">
-          {blogData?.title}
+          {blog.title}
         </h1>
         <p className="mb-8 text-lg leading-relaxed text-gray-600 dark:text-gray-400">
-          {blogData?.description}
+          {blog.description}
         </p>
-
         <hr className="mb-8 border-gray-200 dark:border-gray-700" />
-        <div className="mb-10 flex items-center gap-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-900 text-sm font-bold text-white dark:bg-white dark:text-gray-900">
-            {getInitials(blogData?.author)}
-          </div>
-
-          <div>
-            <p className="font-semibold text-gray-900 dark:text-white">
-              {blogData?.author}
-            </p>
-
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Frontend Developer · 5 min read
-            </p>
-          </div>
-        </div>
-        <article className="text-lg leading-8 text-gray-700 dark:text-gray-300">
-          {blogData?.content}
+        <p className="mb-10 text-sm text-gray-500">Author #{blog.author}</p>
+        <article className="whitespace-pre-wrap text-lg leading-8 text-gray-700 dark:text-gray-300">
+          {blog.content}
         </article>
+        {deleteMutation.isError ? (
+          <p className="mt-6 text-sm text-destructive">
+            {deleteMutation.error instanceof ApiError
+              ? deleteMutation.error.detail
+              : "Could not delete this post."}
+          </p>
+        ) : null}
       </div>
     </section>
   );

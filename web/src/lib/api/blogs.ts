@@ -1,45 +1,28 @@
-export const fetchBlogs = async () => {
-  try {
-    const response = await fetch("http://127.0.0.1:8000/blogs");
-    const data = response.json();
-    return data;
-  } catch (e) {
-    console.log(e);
-    return [];
-  }
-};
+import { apiRequest } from "./client";
+import type { Blog, BlogPayload } from "../../features/blogs/types/blogTypes";
 
-export const fetchBlog = async (id: string | undefined) => {
-  try {
-    const response = await fetch(`http://127.0.0.1:8000/blogs/${id}`);
-    const data = response.json();
-    return data;
-  } catch (e) {
-    console.log(e);
-    return {};
-  }
-};
+export function fetchBlogs(): Promise<Blog[]> {
+  return apiRequest<Blog[]>("/blogs");
+}
 
-export const deleteBlog = async (id: string | undefined) => {
-  try {
-    const response = await fetch(`http://127.0.0.1:8000/blogs/${id}`, {
-      method: "DELETE",
-    });
-    const data = response.json();
-    return data;
-  } catch (e) {
-    console.log(e);
-  }
-};
+export function fetchBlog(id: number): Promise<Blog> {
+  return apiRequest<Blog>(`/blogs/${id}`);
+}
 
-export const updateBlog = async (id: string | undefined) => {
-  try {
-    const response = await fetch(`http://127.0.0.1:8000/blogs/${id}`, {
-      method: "PUT",
-    });
-    const data = response.json();
-    return data;
-  } catch (e) {
-    console.log(e);
-  }
-};
+export function createBlog(payload: BlogPayload): Promise<void> {
+  return apiRequest<void>("/blogs", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateBlog(id: number, payload: BlogPayload): Promise<void> {
+  return apiRequest<void>(`/blogs/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteBlog(id: number): Promise<void> {
+  return apiRequest<void>(`/blogs/${id}`, { method: "DELETE" });
+}

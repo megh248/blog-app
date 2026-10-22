@@ -3,16 +3,15 @@ export interface Blog {
   title: string;
   content: string;
   description: string;
-  author: string | undefined;
+  author: number | string;
   category: string;
-  detail?: string;
-  data?: object; // ERROR HANDLING VARIABLES
-  message?: string // ERROR HANDLING VARIABLES
 }
 
-export interface BlogErrorResponse {
-  data: [];
-  message: string;
+export interface BlogPayload {
+  title: string;
+  description: string;
+  content: string;
+  category: string;
 }
 
 export interface BlogListProps {
@@ -20,9 +19,6 @@ export interface BlogListProps {
   isLoading: boolean;
 }
 
-export interface BlogCardProps{
-    blog: Blog
-}
-export interface BlogDetailsProps{
-    blog: Blog
+export interface BlogCardProps {
+  blog: Blog;
 }

@@ -1,4 +1,5 @@
 export interface CategorySectionProps {
-    selectedCategory: string;
-    onValueChange: Function
+  selectedCategory: string;
+  categories: string[];
+  onValueChange: (value: string) => void;
 }
